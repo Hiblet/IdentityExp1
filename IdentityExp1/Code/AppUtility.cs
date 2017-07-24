@@ -28,7 +28,7 @@ namespace NZ01
         /// <remarks>
         /// https://en.wikipedia.org/wiki/X-Forwarded-For
         /// Ref: https://stackoverflow.com/questions/28664686/how-do-i-get-client-ip-address-in-asp-net-core
-        /// Credit: SO user "crokusek"
+        /// Credit: StackOverflow user "crokusek"
         /// </remarks>
 
         public static string GetRequestIP(HttpContext context, bool tryUseXForwardHeader = true )

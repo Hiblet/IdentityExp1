@@ -18,6 +18,7 @@ using NZ01;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
+using AspNetCoreRateLimit;
 
 namespace IdentityExp1
 {
@@ -37,6 +38,7 @@ namespace IdentityExp1
 
         public void ConfigureServices(IServiceCollection services)
         {
+
 
             ///////////////////////////////////////////////////////////////////
             // Classes required for Identity
@@ -80,7 +82,7 @@ namespace IdentityExp1
             // Override loaded options if you wish with delegates
             services.Configure<NZ01.Options>(myOptions => { myOptions.Option1 = "This data held in Startup.cs"; });
 
-            services.AddSingleton<IConfiguration>(Configuration); // Add the built config object to the IoC, making it injectable to a ctor.
+            services.AddSingleton<IConfiguration>(Configuration); // Add the built config object to the Services container, making it injectable to a ctor.
 
             //
             ///////////////////////////////////////////////////////////////////
@@ -145,6 +147,32 @@ namespace IdentityExp1
             //        "DisneyUser",
             //        policy => policy.RequireClaim("DisneyCharacter", "IAmMickey"));
             //});
+
+
+            ///////////////////////////////////////////////////////////////////
+            // AspNetCoreRateLimit
+            //
+
+            services.AddMemoryCache();
+
+            // Configure ip rate limiting middle-ware            
+            services.Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"));
+            services.Configure<IpRateLimitPolicies>(Configuration.GetSection("IpRateLimitPolicies"));
+            services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+            
+            // Configure client rate limiting middleware
+            /*
+            services.Configure<ClientRateLimitOptions>(Configuration.GetSection("ClientRateLimiting"));
+            services.Configure<ClientRateLimitPolicies>(Configuration.GetSection("ClientRateLimitPolicies"));
+            services.AddSingleton<IClientPolicyStore, MemoryCacheClientPolicyStore>();
+            */
+
+            // Both IP and/or Client Rate Limit middleware need a RateLimitCounterStore
+            services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+
+            //
+            ///////////////////////////////////////////////////////////////////
+
         }
 
         public void Configure(
@@ -207,6 +235,16 @@ namespace IdentityExp1
             ///////////////////////////////////////////////////////////////////
 
             app.UseIdentity();
+
+            ///////////////////////////////////////////////////////////////////
+            // AspNetCoreRateLimit;
+            // Note: Check ConfigureServices() has required objects inst'd.
+
+            //app.UseClientRateLimiting();
+            app.UseIpRateLimiting();
+
+            ///////////////////////////////////////////////////////////////////
+
             app.UseMvcWithDefaultRoute();
 
 

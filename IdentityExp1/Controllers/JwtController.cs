@@ -110,7 +110,7 @@ namespace IdentityExp1.Controllers
         /// The refresh token sent back should be the string supplied in the
         /// second array element from the Issue action, without quotes.
         /// Example body: 
-        ///  sRefreshToken=ahHen2djce...
+        ///  sRefreshToken=eyAahHen2djce...
         /// </remarks>
         [HttpPost]
         public async Task<IActionResult> Refresh(string sRefreshToken)
