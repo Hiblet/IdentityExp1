@@ -87,7 +87,19 @@ namespace IdentityExp1
             //
             ///////////////////////////////////////////////////////////////////
 
+            ///////////////////////////////////////////////////////////////////
+            // IIS
 
+            // We are using JWTs, so the app.UseJwtBearerAuthentication setting 
+            // should dictate how authentication is done.
+            services.Configure<IISOptions>(options => {
+                options.AutomaticAuthentication = false;
+                options.ForwardClientCertificate = false;
+                options.ForwardWindowsAuthentication = false;
+            });
+
+            //
+            ///////////////////////////////////////////////////////////////////
 
             ///////////////////////////////////////////////////////////////////
             // JWT
@@ -182,6 +194,8 @@ namespace IdentityExp1
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager)
         {
+            var prefix = "Configure() - ";
+
             loggerFactory.AddLog4Net();
 
             app.UseMiddleware<NZ01.LogRequestAndResponseMiddleware>(); 
@@ -308,6 +322,9 @@ namespace IdentityExp1
 
             //
             ///////////////////////////////////////////////////////////////////
+
+            var logger = loggerFactory.CreateLogger<Startup>();
+            logger.LogInformation(prefix + $"Startup completed for environment [{env.EnvironmentName}]");
         }
 
 

@@ -29,11 +29,6 @@ namespace AspNetCoreRateLimit
             _ipParser = ipParser != null ? ipParser : new ReverseProxyIpParser(_options.RealIpHeader);
 
             _processor = new IpRateLimitProcessor(_options, counterStore, policyStore, _ipParser);
-
-            // DIAG
-            // Log the loaded options
-            //_logger.LogDebug("Loaded IPRateLimitOptions:" + JsonConvert.SerializeObject(_options));
-            // END DIAG
         }
 
         public async Task Invoke(HttpContext httpContext)
@@ -47,6 +42,7 @@ namespace AspNetCoreRateLimit
 
             // compute identity from request
             var identity = SetIdentity(httpContext);
+            _logger.LogInformation($"Identity; User:[{identity.ClientId}]; IP:[{identity.ClientIp}]");
 
             // check white list
             if (_processor.IsWhitelisted(identity))

@@ -26,11 +26,6 @@ namespace AspNetCoreRateLimit
             _logger = logger;
 
             _processor = new ClientRateLimitProcessor(_options, counterStore, policyStore);
-
-            // DIAG
-            // Log the loaded options
-            //_logger.LogDebug("Loaded ClientRateLimitOptions:" + JsonConvert.SerializeObject(_options));
-            // END DIAG
         }
 
         public async Task Invoke(HttpContext httpContext)
@@ -44,6 +39,7 @@ namespace AspNetCoreRateLimit
 
             // compute identity from request
             var identity = SetIdentity(httpContext);
+            _logger.LogInformation($"Identity; User:[{identity.ClientId}]; IP:[{identity.ClientIp}]");
 
             // check white list
             if (_processor.IsWhitelisted(identity))
