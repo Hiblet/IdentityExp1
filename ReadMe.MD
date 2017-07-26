@@ -12,6 +12,10 @@ Tokens can also be used by websites, desktop and mobile apps, allowing the appli
 
 The Identity store uses a simple memory record that is wiped on each run, so that you can use this as a start point to adapt it for your own persistence layer or ORM.
 
+HTTPS (SSL) is implemented as a mandatory constraint.  Encrypt all the things.
+
+Rate Limiting is available but can be turned off by removing options from the appsettings.json file.
+
 This treatment does not consider 3rd party authentication ie Facebook logins, it is more a learning exercise for token usage.  
 If you have never used tokens before, and want to have a single way for all platforms to authenticate to an app server, this could be useful.
 
@@ -35,8 +39,7 @@ See below for an explanation of tokens, and what values to use, if you are not f
 ## Deployment
 
 The system is not intended for deployment in a real scenario.
-Should a real implementation be developed from it, HTTPS should be used for all communication.  
-You will also be needing a real database implementation, not a memory store.
+You will be needing a real database implementation, not a memory store.
 
 
 
@@ -81,7 +84,13 @@ The refresh token lifetime should always be longer than the access token lifetim
 
 ## API Endpoints
 
-There are two API endpoints, one to issue tokens, and one to refresh tokens
+There are two API endpoints:
+
+ *api/jwt/issue*
+ *api/jwt/refresh*
+ 
+Issue endpoint takes credentials and sends back an access and refresh token.
+Refresh endpoint takes a refresh token and sends back a new access and refresh token.
 
 
 
@@ -140,12 +149,38 @@ For a non-critical applications, 5 or 10 minutes might be good.  It is a call fo
 
 
 
+### IP Address Binding
+
+When the Issue endpoint is called, the Refresh token is built.  
+Inside that token, the IP address of the connection making the request is recorded, and stored in the faux database.
+When the Refresh Token is received at the Refresh endpoint, the token is validated to ensure it has not been tampered with, and the IP address recorded in it is compared to the expected IP address in the database.  
+If there is a mis-match, the refresh is rejected and the user must re-authenticate with credentials via the Issue endpoint.
+
+This is designed to prevent token theft.  Normally, posession of a token is enough to assert identity, but this design is an attempt to improve security and prevent someone hijacking a Refresh Token.
+It is acknowledged that this does not stop malicious code hijacking the token on the same client machine, or deal with IP address spoofing.  
+Also, it will be inconvenient for any situation where the IP address is constantly changing.  
+It should be relatively simple to comment out the code that checks the IP address against the database, if this is causing problems (in the JwtController.Refresh() function).
+
+Suggestions for security improvements will be welcomed and, of course, acknowledged.
+
+
+
 ### Sharing the Identity Server Across Multiple Applications
 
 Roles are not very sophisticated, but are simple and can be useful.  As the role name is just a string, a single Identity server could serve multiple applications by dot-delimiting the roles.  
 For example, if you have AppA and AppB, each with their own role requirements, but you want to use a single login for them, you could set roles to be "APPA.USER" and "APPB.USER".
 This allows a single identity to have different privileges on different applications, and does not require additional coding.
 The consuming application must just be written to protect endpoints with roles that include it's own application name.
+
+
+
+### Rate Limiting
+
+Stefan Prodan's AspNetCoreRateLimit code has been used to prevent malicious or accidental spamming of the two critical endpoints, Issue and Refresh.
+The implementation uses the IPRateLimit Middleware only, as this combines IP address and UserID to build an identity.
+
+Rate Limiting can be turned off by removing options from the appsettings.json file.  
+The rate limiting Middleware code initially checks for valid options and shortcuts out if none are set.
 
 
 
@@ -156,6 +191,10 @@ https://github.com/MatthewKing/IdentityWithoutEF
 
 The JWT code originated with William Hallat's JWT treatment:
 https://goblincoding.com/2016/07/03/issuing-and-authenticating-jwt-tokens-in-asp-net-core-webapi-part-i/
+
+The AspNetCoreRateLimit code is from Stefan Prodan's project:
+https://github.com/stefanprodan/AspNetCoreRateLimit
+
 
 
 
