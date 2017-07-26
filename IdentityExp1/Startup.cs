@@ -19,6 +19,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
 using AspNetCoreRateLimit;
+using Microsoft.AspNetCore.Rewrite;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 
 namespace IdentityExp1
 {
@@ -39,9 +42,10 @@ namespace IdentityExp1
         public void ConfigureServices(IServiceCollection services)
         {
 
-
             ///////////////////////////////////////////////////////////////////
             // Classes required for Identity
+            //
+
             var userStore = new ExampleUserStore();
             var roleStore = new ExampleRoleStore();
             var tokenStore = new ExampleTokenStore();
@@ -68,6 +72,7 @@ namespace IdentityExp1
 
             //
             ///////////////////////////////////////////////////////////////////
+
 
 
             ///////////////////////////////////////////////////////////////////
@@ -161,6 +166,17 @@ namespace IdentityExp1
             //});
 
 
+
+            ///////////////////////////////////////////////////////////////////
+            // HTTPS SLL
+
+            services.Configure<MvcOptions>(options => { options.Filters.Add(new RequireHttpsAttribute()); });
+
+            //
+            ///////////////////////////////////////////////////////////////////
+
+
+
             ///////////////////////////////////////////////////////////////////
             // AspNetCoreRateLimit
             //
@@ -198,11 +214,32 @@ namespace IdentityExp1
 
             loggerFactory.AddLog4Net();
 
+            ///////////////////////////////////////////////////////////////////
+            // HTTPS SSL
+
+            app.UseRewriter(new RewriteOptions().AddRedirectToHttps());
+
+            //
+            ///////////////////////////////////////////////////////////////////
+
+
             app.UseMiddleware<NZ01.LogRequestAndResponseMiddleware>(); 
 
             app.UseStatusCodePages();
             if (env.IsDevelopment()) { app.UseDeveloperExceptionPage(); }
+
             app.UseStaticFiles();
+
+            // LetsEncrypt Acme Challenge:
+            // Let's Encrypt will test whether or not you own a website by writing something to the 
+            // site and expecting it to be available.  You have to make that directory available.
+            // Ref: https://www.softfluent.com/blog/dev/Using-Let-s-encrypt-with-ASP-NET-Core
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @".well-known")),
+                RequestPath = new PathString("/.well-known"),
+                ServeUnknownFileTypes = true // serve extensionless file
+            });
 
 
             ///////////////////////////////////////////////////////////////////
