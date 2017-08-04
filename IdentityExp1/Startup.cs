@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using IdentityExp1.Models;
 using Microsoft.Extensions.Configuration;
 using NZ01;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens; // SymmetricSecurityKey
 using System.Text;
 using System.Security.Claims;
 using AspNetCoreRateLimit;
@@ -41,7 +41,6 @@ namespace IdentityExp1
 
         public void ConfigureServices(IServiceCollection services)
         {
-
             ///////////////////////////////////////////////////////////////////
             // Classes required for Identity
             //
@@ -230,6 +229,7 @@ namespace IdentityExp1
 
             app.UseStaticFiles();
 
+            // HTTPS SSL (certification requirement)
             // LetsEncrypt Acme Challenge:
             // Let's Encrypt will test whether or not you own a website by writing something to the 
             // site and expecting it to be available.  You have to make that directory available.

@@ -113,6 +113,7 @@ namespace IdentityExp1.Controllers
         ///  sRefreshToken=eyAahHen2djce...
         /// </remarks>
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Refresh(string sRefreshToken)
         {
             var prefix = "Refresh() - ";
@@ -448,7 +449,7 @@ namespace IdentityExp1.Controllers
         [HttpGet]
         //[AllowAnonymous] // Default lockdown, user must be authenticated
         public IActionResult TestB()
-        { return Ok($"TestB Accessible to Unauthenticated Users; {DateTime.UtcNow}; " + diagnosticUserDetails()); }
+        { return Ok($"TestB Inaccessible to Unauthenticated Users; {DateTime.UtcNow}; " + diagnosticUserDetails()); }
 
         [HttpGet]
         [Authorize(Roles = "USER")] // Only authenticated users those with 'User' role
