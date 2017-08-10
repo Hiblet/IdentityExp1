@@ -7,14 +7,17 @@ using Microsoft.Extensions.Logging;
 
 namespace NZ01
 {
-    public static class Log4netExtensions
+    public static class Log4NetExtensions
     {
         public static int CountCalls_AddLog4Net { get; set; } = 0;
 
-        public static ILoggerFactory AddLog4Net(this ILoggerFactory factory)
+        public static ILoggerFactory AddLog4Net(this ILoggerFactory factory, IEmailService emailService = null)
         {
             ++CountCalls_AddLog4Net;
             factory.AddProvider(new Log4NetProvider("App"));
+
+            Log4NetAsyncLog.IEmailService = emailService; // Set the email service for the provider; Null value should be tolerated.
+
             return factory;
         }
     }

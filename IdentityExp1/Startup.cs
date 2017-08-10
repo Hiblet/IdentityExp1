@@ -27,7 +27,9 @@ namespace IdentityExp1
 {
     public class Startup
     {
-        public IConfigurationRoot Configuration { get; }
+        public IConfigurationRoot _configuration { get; }
+        public ILogger _logger;
+
 
         public Startup(IHostingEnvironment env)
         {
@@ -36,7 +38,7 @@ namespace IdentityExp1
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange:false)
                 .AddEnvironmentVariables();
-            Configuration = builder.Build();
+            _configuration = builder.Build();
         }
 
         public void ConfigureServices(IServiceCollection services)
@@ -81,12 +83,12 @@ namespace IdentityExp1
             services.AddOptions();
 
             // Register the IConfiguration instance which MyOptions binds against.
-            services.Configure<NZ01.Options>(Configuration); // Class NZ01.Options holds system-wide variables
+            services.Configure<NZ01.Options>(_configuration); // Class NZ01.Options holds system-wide variables
 
             // Override loaded options if you wish with delegates
             services.Configure<NZ01.Options>(myOptions => { myOptions.Option1 = "This data held in Startup.cs"; });
 
-            services.AddSingleton<IConfiguration>(Configuration); // Add the built config object to the Services container, making it injectable to a ctor.
+            services.AddSingleton<IConfiguration>(_configuration); // Add the built config object to the Services container, making it injectable to a ctor.
 
             //
             ///////////////////////////////////////////////////////////////////
@@ -109,9 +111,9 @@ namespace IdentityExp1
             // JWT
 
             // Get options from app settings
-            var jwtAppSettingOptions = Configuration.GetSection(nameof(JwtIssuerOptions));
+            var jwtAppSettingOptions = _configuration.GetSection(nameof(JwtIssuerOptions));
 
-            string secret = Configuration[Constants.SECRET_ENV_VAR] ?? "DEFAULT_SECRET_KEY"; // SECRET KEY MUST BE 16 CHARS OR MORE
+            string secret = _configuration[Constants.SECRET_ENV_VAR] ?? "DEFAULT_SECRET_KEY"; // SECRET KEY MUST BE 16 CHARS OR MORE
             SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secret.PadRight(16)));
 
             // Configure JwtIssuerOptions
@@ -165,6 +167,25 @@ namespace IdentityExp1
             //});
 
 
+            ///////////////////////////////////////////////////////////////////
+            // Email Service
+            //
+
+            // Load the Options;
+            // Requires:
+            //  Nuget for MailKit.
+            //  EmailOptions in appsettings.json .
+            //  Password in Environment variables.
+
+            services.Configure<EmailOptions>(_configuration.GetSection("EmailOptions"));
+            services.Configure<EmailOptions>(options =>
+                options.Password = _configuration.GetSection(EmailService.EMAIL_PASSWORD).Value);
+
+            services.AddSingleton<EmailService>();
+
+            //
+            ///////////////////////////////////////////////////////////////////
+
 
             ///////////////////////////////////////////////////////////////////
             // HTTPS SLL
@@ -183,8 +204,8 @@ namespace IdentityExp1
             services.AddMemoryCache();
 
             // Configure ip rate limiting middle-ware            
-            services.Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"));
-            services.Configure<IpRateLimitPolicies>(Configuration.GetSection("IpRateLimitPolicies"));
+            services.Configure<IpRateLimitOptions>(_configuration.GetSection("IpRateLimiting"));
+            services.Configure<IpRateLimitPolicies>(_configuration.GetSection("IpRateLimitPolicies"));
             services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
             
             // Configure client rate limiting middleware
@@ -205,13 +226,15 @@ namespace IdentityExp1
         public void Configure(
             IApplicationBuilder app, 
             IHostingEnvironment env, 
-            ILoggerFactory loggerFactory, 
+            ILoggerFactory loggerFactory,
+            EmailService emailService,
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager)
         {
             var prefix = "Configure() - ";
 
-            loggerFactory.AddLog4Net();
+            loggerFactory.AddLog4Net(emailService);
+            _logger = loggerFactory.CreateLogger<Startup>();
 
             ///////////////////////////////////////////////////////////////////
             // HTTPS SSL
@@ -227,12 +250,12 @@ namespace IdentityExp1
             app.UseStatusCodePages();
             if (env.IsDevelopment()) { app.UseDeveloperExceptionPage(); }
 
-            //app.UseStaticFiles(); // Should be removed, as element below makes this redundant?
+            app.UseStaticFiles(); 
 
             // HTTPS SSL (certification requirement)
             // LetsEncrypt Acme Challenge:
             // Let's Encrypt will test whether or not you own a website by writing something to the 
-            // site and expecting it to be available.  You have to make that directory available.
+            // site and expecting it to be available.  You have to create that directory and make that directory available.
             // Ref: https://www.softfluent.com/blog/dev/Using-Let-s-encrypt-with-ASP-NET-Core
             app.UseStaticFiles(new StaticFileOptions
             {
@@ -247,10 +270,10 @@ namespace IdentityExp1
 
             // Authenticate before identity
 
-            string secret = Configuration[Constants.SECRET_ENV_VAR] ?? "DEFAULT_SECRET_KEY"; // SECRET KEY MUST BE 16 CHARS OR MORE
+            string secret = _configuration[Constants.SECRET_ENV_VAR] ?? "DEFAULT_SECRET_KEY"; // SECRET KEY MUST BE 16 CHARS OR MORE
             SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secret.PadRight(16)));
 
-            var jwtAppSettingOptions = Configuration.GetSection(nameof(JwtIssuerOptions));
+            var jwtAppSettingOptions = _configuration.GetSection(nameof(JwtIssuerOptions));
 
             var accessClockSkew = jwtAppSettingOptions[nameof(JwtIssuerOptions.AccessClockSkew)] ?? "";
             UInt32 iAccessClockSkew = 0;
@@ -360,8 +383,7 @@ namespace IdentityExp1
             //
             ///////////////////////////////////////////////////////////////////
 
-            var logger = loggerFactory.CreateLogger<Startup>();
-            logger.LogInformation(prefix + $"Startup completed for environment [{env.EnvironmentName}]");
+            _logger.LogWarning(prefix + $"Application Started [{env.EnvironmentName}]");
         }
 
 

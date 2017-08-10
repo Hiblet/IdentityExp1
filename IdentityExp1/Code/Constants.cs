@@ -25,6 +25,7 @@ namespace NZ01
         ///////////////////////////////////////////////////////////////////////
         // GENERIC
 
+        public static readonly string FNSUFFIX = "() - ";
         public static readonly string MIME_JSON = "application/json";
 
         public static readonly string DATEONLYFORMAT = "yyyy-MM-dd";

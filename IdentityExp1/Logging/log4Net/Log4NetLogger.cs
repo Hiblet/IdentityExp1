@@ -17,6 +17,7 @@ namespace NZ01
         public static int CountCalls_IsEnabled { get; set; } = 0;
         public static int CountCalls_Log { get; set; } = 0;
 
+
         public Log4NetLogger(string name)
         {
             ++CountCalls_InstanceCtor;

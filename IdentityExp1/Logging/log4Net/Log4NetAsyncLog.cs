@@ -65,13 +65,19 @@ namespace NZ01
         private static int _thresholdLevelError = 1000000; // Error and reject messages if this number of messages is on the queue
         private static bool _bLevelErrorPassed = false;
 
+        private static IEmailService _emailService;
+        private static LogLevel EmailLogThreshold { get; set; } = LogLevel.Warning;
+        private static string _assembly = "";
+
 
         // Static Ctor
         static Log4NetAsyncLog()
         {
             var prefix = "Log4NetAsyncLog() [STATIC CTOR] - ";
 
-            var loggerRepository = log4net.LogManager.CreateRepository(Assembly.GetEntryAssembly(), typeof(log4net.Repository.Hierarchy.Hierarchy));
+            var assembly = Assembly.GetEntryAssembly();
+            _assembly = assembly.GetName().Name; // Cache name
+            var loggerRepository = log4net.LogManager.CreateRepository(assembly, typeof(log4net.Repository.Hierarchy.Hierarchy));
 
             var xmlElement = parseLog4NetConfigFile("./Logging/log4Net/log4net.config");
             if (!loggerRepository.Configured)            
@@ -181,10 +187,13 @@ namespace NZ01
                     break;
                 default:
                     msg = $"[Unrecognised logLevel {wrapper.LogLevel}] " + msg;
-                    _logger.Error(msg, wrapper.Exception);
+                    _logger.Info(msg, wrapper.Exception);
                     break;
             }
 
+            // Email 
+            if (wrapper.LogLevel >= EmailLogThreshold)
+                sendEmail(msg, wrapper.LogLevel);            
         }
 
 
@@ -293,6 +302,26 @@ namespace NZ01
                 _qSizeFormatter = "D4";
             else
                 _qSizeFormatter = "D" + iLogTen.ToString(); // eg "D8"
+        }
+
+        public static IEmailService IEmailService
+        {
+            set
+            {
+                if (_emailService == null && value != null)
+                    _emailService = value;
+            }
+        }
+
+        private static void sendEmail(string msg, LogLevel logLevel)
+        {
+            // Exit if no email set
+            if (_emailService == null)
+                return;
+
+            string subject = _assembly + " " + logLevel.ToString();
+            EmailContext ec = new EmailContext { Subject = subject, Body = msg };
+            _emailService.Enqueue(ec);    
         }
     }
 }

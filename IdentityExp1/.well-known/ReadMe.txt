@@ -1,0 +1,1 @@
+This directory must exist to validate LetsEncrypt ownership, to facilitate certificate issue and update.
