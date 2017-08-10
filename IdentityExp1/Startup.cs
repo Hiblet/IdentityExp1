@@ -227,7 +227,7 @@ namespace IdentityExp1
             app.UseStatusCodePages();
             if (env.IsDevelopment()) { app.UseDeveloperExceptionPage(); }
 
-            app.UseStaticFiles();
+            //app.UseStaticFiles(); // Should be removed, as element below makes this redundant?
 
             // HTTPS SSL (certification requirement)
             // LetsEncrypt Acme Challenge:
