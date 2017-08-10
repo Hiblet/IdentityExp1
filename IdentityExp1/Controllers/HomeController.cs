@@ -32,18 +32,14 @@ namespace IdentityExp1.Controllers
             testDic["Placeholder"] = "Placeholder";
 
             // Enumerate the Options
-            foreach (PropertyInfo prop in typeof(NZ01.Options).GetProperties())
-            {
-                testDic[prop.Name] = prop.GetValue(_options).ToString();
-            }
-
+            //foreach (PropertyInfo prop in typeof(NZ01.Options).GetProperties())            
+            //    testDic[prop.Name] = prop.GetValue(_options).ToString();
+            
             // Enumerate the Config
-            IEnumerable<KeyValuePair<string,string>> configEnum = _config.AsEnumerable();
-            foreach (KeyValuePair<string, string> kvp in configEnum)
-            {
-                testDic[kvp.Key] = kvp.Value;
-            }
-
+            //IEnumerable<KeyValuePair<string,string>> configEnum = _config.AsEnumerable();
+            //foreach (KeyValuePair<string, string> kvp in configEnum)            
+            //    testDic[kvp.Key] = kvp.Value;
+            
             return View(testDic);
         }
 
