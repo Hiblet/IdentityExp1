@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.AspNetCore.Identity;
 
-namespace IdentityExp1.Models
+namespace NZ01
 {
     public interface ITokenStore<TToken> : IDisposable where TToken : class
     {

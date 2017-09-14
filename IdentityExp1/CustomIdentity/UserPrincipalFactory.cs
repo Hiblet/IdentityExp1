@@ -1,24 +1,25 @@
-﻿using System.Security.Claims;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+
+using Microsoft.AspNetCore.Builder; // IdentityOptions
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-
-using IdentityExp1.Models;
-using NZ01;
+using System.Security.Claims; // ClaimsPrincipal
 
 namespace NZ01
 {
-    public class ExampleUserPrincipalFactory : IUserClaimsPrincipalFactory<ExampleApplicationUser>
+    public class UserPrincipalFactory : IUserClaimsPrincipalFactory<ApplicationUser>
     {
         private readonly IdentityOptions _options;
 
-        public ExampleUserPrincipalFactory(IOptions<IdentityOptions> optionsAccessor)
+        public UserPrincipalFactory(IOptions<IdentityOptions> optionsAccessor)
         {
             _options = optionsAccessor?.Value ?? new IdentityOptions();
         }
 
-        public Task<ClaimsPrincipal> CreateAsync(ExampleApplicationUser user)
+        public Task<ClaimsPrincipal> CreateAsync(ApplicationUser user)
         {
             var identity = new ClaimsIdentity(
                 _options.Cookies.ApplicationCookieAuthenticationScheme,

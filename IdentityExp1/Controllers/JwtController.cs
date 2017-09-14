@@ -72,7 +72,7 @@ namespace IdentityExp1.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Issue(LoginCredentials creds)
         {
-            var prefix = "Issue() - ";
+            string prefix = nameof(Issue) + Constants.FNSUFFIX;
 
             string sInvalid = "Invalid Credentials - ";
 
@@ -318,6 +318,9 @@ namespace IdentityExp1.Controllers
             claims.Add(new Claim(JwtRegisteredClaimNames.Jti, tokenID));
             claims.Add(new Claim(JwtRegisteredClaimNames.Iat, toUnixEpochDate(_jwtOptions.IssuedAt).ToString(), ClaimValueTypes.Integer64));
 
+            // Add any claims here that the consuming application may need when using an access token.
+            claims.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
+
             return Task.FromResult(new ClaimsIdentity(genericID, claims));
         }
 
@@ -344,8 +347,19 @@ namespace IdentityExp1.Controllers
                 return Task.FromResult<ClaimsIdentity>(null); // Credentials are invalid, or account doesn't exist
         }
 
+        private ICollection<Claim> getRoleClaims(ApplicationUser user)
+        {
+            List<Claim> roleClaims = new List<Claim>();
 
+            var roles = _userManager.GetRolesAsync(user).Result;
 
+            foreach (string role in roles)            
+                roleClaims.Add(new Claim(ClaimTypes.Role, role));
+            
+            return roleClaims;
+        }
+
+        /* Version for Memory Store example, where roles were stored as a string collection in the user.Roles property.
         /// <summary>
         /// Convert known roles to claims.
         /// </summary>
@@ -360,7 +374,7 @@ namespace IdentityExp1.Controllers
 
             return roleClaims;
         }
-
+        */
 
         #region POLICY_TESTING
 
@@ -375,10 +389,13 @@ namespace IdentityExp1.Controllers
         // lifetime that will give me time to test all actions (10 mins)
         // and then set the refresh time greater than that.
         // Request an access token for Admin (via PostMan)...
-        //  POST http://localhost:61368/api/jwt/issue UserName=Admin&Password=test123
+        //  UserName=Admin&Password=test123
+        //  HTTP:  POST http://localhost:61368/api/jwt/issue 
+        //  HTTPS: POST http://localhost:44347/api/jwt/issue 
         // Try to access each action, by creating a GET request with header
         //  Authorize: Bearer <access_token>
-        //  GET http://localhost:61368/api/jwt/testA
+        //  HTTP:  GET http://localhost:61368/api/jwt/testA
+        //  HTTPS: GET http://localhost:44347/api/jwt/testA
         // Repeat for each action, and repeat whole process again for each user.
         // This should build a result grid as below...
         // 
@@ -434,7 +451,7 @@ namespace IdentityExp1.Controllers
         //  ------------------------------------------
         // | User               | Action   | Result   |
         //  ------------------------------------------
-        // | Admin [User,Admin] | testA    | Y        |
+        // | Charlie [Admin]    | testA    | Y        |
         // |                    | testB    | Y        |
         // |                    | testC    | N        |
         // |                    | testD    | Y        |
@@ -486,7 +503,7 @@ namespace IdentityExp1.Controllers
         {
             List<string> msgs = new List<string>();
 
-            string username = HttpContext.User.Identity.Name;
+            string username = HttpContext.User.Identity.Name ?? "";
             msgs.Add($"User:[{username}]");
             msgs.Add($"Authenticated:[{HttpContext.User.Identity.IsAuthenticated}]");
             msgs.Add($"AuthType:[{HttpContext.User.Identity.AuthenticationType}]");

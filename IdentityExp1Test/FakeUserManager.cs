@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Builder;
 using System.Threading.Tasks;
 using System.Threading;
 
+using NZ01;
+
 namespace IdentityExp1Test
 {
     public class FakeUserManager : UserManager<ApplicationUser>
@@ -34,9 +36,11 @@ namespace IdentityExp1Test
 
         public override Task<ApplicationUser> FindByNameAsync(string username)
         {
+           
             HashSet<string> roles = new HashSet<string>();
-            roles.Add("User");
-            var user = new ApplicationUser { UserId = username + "_GUID", UserName = username, Roles = roles };
+            //roles.Add("User");
+            //var user = new ApplicationUser { UserId = username + "_GUID", UserName = username, Roles = roles };
+            var user = new ApplicationUser { UserId = username + "_GUID", UserName = username };
             return Task.FromResult(user);
         }
 

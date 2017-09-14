@@ -44,20 +44,22 @@ namespace IdentityExp1
         public void ConfigureServices(IServiceCollection services)
         {
             ///////////////////////////////////////////////////////////////////
-            // Classes required for Identity
+            // Classes required for Identity 
             //
 
+            // EXAMPLE
+            /*
             var userStore = new ExampleUserStore();
             var roleStore = new ExampleRoleStore();
             var tokenStore = new ExampleTokenStore();
-            services.AddSingleton<IUserStore<ApplicationUser>>(userStore);
-            services.AddSingleton<IUserPasswordStore<ApplicationUser>>(userStore);
-            services.AddSingleton<IUserEmailStore<ApplicationUser>>(userStore);
-            services.AddSingleton<IRoleStore<ApplicationRole>>(roleStore);
+            services.AddSingleton<IUserStore<ExampleApplicationUser>>(userStore);
+            services.AddSingleton<IUserPasswordStore<ExampleApplicationUser>>(userStore);
+            services.AddSingleton<IUserEmailStore<ExampleApplicationUser>>(userStore);
+            services.AddSingleton<IRoleStore<ExampleApplicationRole>>(roleStore);
             services.AddSingleton<ITokenStore<ApplicationJwtRefreshToken>>(tokenStore);
-            services.AddSingleton<IUserClaimsPrincipalFactory<ApplicationUser>, ExampleUserPrincipalFactory>();
+            services.AddSingleton<IUserClaimsPrincipalFactory<ExampleApplicationUser>, ExampleUserPrincipalFactory>();
 
-            services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            services.AddIdentity<ExampleApplicationUser, ExampleApplicationRole>(options =>
             {
                 // Relaxed for testing...
                 options.Password.RequiredLength = 6;
@@ -70,6 +72,28 @@ namespace IdentityExp1
 
             // AddDefaultTokenProviders: Used to add providers for opaque account operation tokens.
             // Try removing.
+            */
+
+            
+            // ACTUAL
+            //var userStore = new UserStore();                         
+            services.AddSingleton<IUserStore<ApplicationUser>,UserStore>();
+            services.AddSingleton<IUserPasswordStore<ApplicationUser>,UserStore>();
+            services.AddSingleton<IUserEmailStore<ApplicationUser>,UserStore>();
+            services.AddSingleton<ITokenStore<ApplicationJwtRefreshToken>,TokenStore>();
+            services.AddSingleton<IRoleStore<ApplicationRole>, RoleStore>();
+            services.AddSingleton<IUserClaimsPrincipalFactory<ApplicationUser>, UserPrincipalFactory>();
+
+            services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            {
+                // Relaxed for testing...
+                options.Password.RequiredLength = 6;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireDigit = false;
+                options.Password.RequireNonAlphanumeric = false;
+            });
+            
 
             //
             ///////////////////////////////////////////////////////////////////
@@ -81,12 +105,6 @@ namespace IdentityExp1
 
             // Adds services required for using options.
             services.AddOptions();
-
-            // Register the IConfiguration instance which MyOptions binds against.
-            services.Configure<NZ01.Options>(_configuration); // Class NZ01.Options holds system-wide variables
-
-            // Override loaded options if you wish with delegates
-            services.Configure<NZ01.Options>(myOptions => { myOptions.Option1 = "This data held in Startup.cs"; });
 
             services.AddSingleton<IConfiguration>(_configuration); // Add the built config object to the Services container, making it injectable to a ctor.
 
@@ -188,7 +206,8 @@ namespace IdentityExp1
 
 
             ///////////////////////////////////////////////////////////////////
-            // HTTPS SLL
+            // HTTPS SSL
+            // Dont forget to do Project.Properties.Debug EnableSSL
 
             services.Configure<MvcOptions>(options => { options.Filters.Add(new RequireHttpsAttribute()); });
 
@@ -221,6 +240,20 @@ namespace IdentityExp1
             //
             ///////////////////////////////////////////////////////////////////
 
+            ///////////////////////////////////////////////////////////////////
+            // APP SPECIFIC
+
+            var connectionStringsSection = _configuration.GetSection("ConnectionStrings");
+            var connStrRaw = connectionStringsSection.GetSection("CustomIdentity").Value; // <- Value of conn string
+            string connStrProcessed = connStrHelper(connStrRaw);
+
+            services.Configure<CustomDynamicOptions>(_configuration); // Bind in my dynamic options structure to the config
+            services.Configure<CustomDynamicOptions>(options => options.ConnStr = connStrProcessed); // Set the value to the created string, so it can be passed via injection.
+
+            //
+            ///////////////////////////////////////////////////////////////////
+
+
         }
 
         public void Configure(
@@ -231,7 +264,7 @@ namespace IdentityExp1
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager)
         {
-            var prefix = "Configure() - ";
+            string prefix = nameof(Configure) + Constants.FNSUFFIX;
 
             loggerFactory.AddLog4Net(emailService);
             _logger = loggerFactory.CreateLogger<Startup>();
@@ -252,17 +285,23 @@ namespace IdentityExp1
 
             app.UseStaticFiles(); 
 
+            ///////////////////////////////////////////////////////////////////
             // HTTPS SSL (certification requirement)
+            //
             // LetsEncrypt Acme Challenge:
             // Let's Encrypt will test whether or not you own a website by writing something to the 
             // site and expecting it to be available.  You have to create that directory and make that directory available.
             // Ref: https://www.softfluent.com/blog/dev/Using-Let-s-encrypt-with-ASP-NET-Core
+            
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @".well-known")),
                 RequestPath = new PathString("/.well-known"),
                 ServeUnknownFileTypes = true // serve extensionless file
             });
+            
+            //
+            ///////////////////////////////////////////////////////////////////
 
 
             ///////////////////////////////////////////////////////////////////
@@ -321,71 +360,56 @@ namespace IdentityExp1
 
             app.UseMvcWithDefaultRoute();
 
-
-
-
-            ///////////////////////////////////////////////////////////////////
-            // TEST DATA            
-            // As this is a memory based Identity implementation, we have to
-            // seed the "database" with users and roles for testing.
-            
-
-            // Populate Roles
-            var role = new ApplicationRole { RoleName = "Admin", RoleId = "Admin" };
-            IdentityResult roleResult = roleManager.CreateAsync(role).Result;
-            if (!roleResult.Succeeded) throw new Exception("Failed to create role Admin");
-
-            role = new ApplicationRole { RoleName = "User", RoleId = "User" };
-            roleResult = roleManager.CreateAsync(role).Result;
-            if (!roleResult.Succeeded) throw new Exception("Failed to create role User");
-
-
-            // Populate Users
-            var userAdmin = new ApplicationUser { UserName = "Admin", Email="admin@example.com" };
-            if (!userManager.CreateAsync(userAdmin, "test123").Result.Succeeded)
-                throw new Exception("Failed to create user Admin");
-
-            var userAlice = new ApplicationUser { UserName = "Alice", Email = "alice@example.com" };
-            if (!userManager.CreateAsync(userAlice, "test123").Result.Succeeded)
-                throw new Exception("Failed to create user Alice");
-
-            var userBob = new ApplicationUser { UserName = "Bob", Email = "bob@example.com" };
-            if (!userManager.CreateAsync(userBob, "test123").Result.Succeeded)
-                throw new Exception("Failed to create user Bob");
-
-            var userCharlie = new ApplicationUser { UserName = "Charlie", Email = "charlie@example.com" };
-            if (!userManager.CreateAsync(userCharlie, "test123").Result.Succeeded)
-                throw new Exception("Failed to create user Charlie");
-
-
-
-            // Apply Roles 
-
-            // Admin user is in [User,Admin] roles
-            if (!userManager.AddToRoleAsync(userAdmin, "User").Result.Succeeded)
-                throw new Exception("Failed to set role");
-
-            if (!userManager.AddToRoleAsync(userAdmin, "Admin").Result.Succeeded)
-                throw new Exception("Failed to set role");
-
-
-            // Alice user is in [User] role
-            if (!userManager.AddToRoleAsync(userAlice, "User").Result.Succeeded)
-                throw new Exception("Failed to set role");
-
-
-            // Bob is not in any role (sadface).
-
-            // Charlie is purely an [Admin]
-            if (!userManager.AddToRoleAsync(userCharlie, "Admin").Result.Succeeded)
-                throw new Exception("Failed to set role");
-
-            //
-            ///////////////////////////////////////////////////////////////////
+            //ExamplePrepareData.Init(userManager, roleManager);
+            PrepareData.Init(userManager, roleManager,loggerFactory.CreateLogger<PrepareData>());
 
             _logger.LogWarning(prefix + $"Application Started [{env.EnvironmentName}]");
         }
 
+
+        /// <summary>
+        /// Function to take a connection string with a PasswordEnvVar placeholder,
+        /// and create a genuine connection string, by substituting in the correct 
+        /// password from an environment variable.
+        /// </summary>
+        /// <param name="connStrRaw"></param>
+        /// <returns></returns>
+        private string connStrHelper(string connStrRaw)
+        {
+            string targetKey = "PasswordEnvVar";
+            string targetVal = "";
+            string[] arrConnStrRaw = connStrRaw.Split(';');
+            List<string> listConnStrRawClean = new List<string>();
+            foreach (string kvp in arrConnStrRaw)
+            {
+                string[] arrKvp = kvp.Split('=');
+                if (arrKvp.Count() == 2)
+                {
+                    if (arrKvp[0] == targetKey)
+                    {
+                        // If this is the PasswordEnvVar variable, 
+                        // get the key, and do not add to clean list.
+                        targetVal = arrKvp[1];
+                    }
+                    else
+                    {
+                        // Pass straight through to the clean list
+                        listConnStrRawClean.Add(kvp);
+                    }
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(targetVal))
+                return connStrRaw;
+
+            string password = _configuration.GetSection(targetVal).Value;
+
+            if (string.IsNullOrWhiteSpace(password))
+                return connStrRaw;
+
+            listConnStrRawClean.Add("Password=" + password);
+            return string.Join(";", listConnStrRawClean);
+        }
 
     }
 }

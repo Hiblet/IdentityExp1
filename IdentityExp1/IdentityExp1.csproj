@@ -28,6 +28,7 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="1.1.2" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="5.1.4" />
     <PackageReference Include="Moq" Version="4.7.99" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.4.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Logging\log4Net\log4Net.config">

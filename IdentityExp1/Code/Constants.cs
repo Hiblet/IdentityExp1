@@ -17,6 +17,7 @@ namespace NZ01
         // APP SPECIFIC
 
         public static readonly string SECRET_ENV_VAR = "CORE_IDENTITYEXP1";
+        public static readonly string GUID_DB = "D"; // Formatting string for GUIDs used in Database
 
         //
         ///////////////////////////////////////////////////////////////////////
