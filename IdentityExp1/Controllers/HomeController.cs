@@ -14,14 +14,11 @@ namespace IdentityExp1.Controllers
 {
     public class HomeController:Controller
     {
-        private readonly NZ01.Options _options;
         private IConfiguration _config;
 
         public HomeController(
-            IOptions<NZ01.Options> options,
             IConfiguration config)
         {
-            _options = options.Value;
             _config = config;
         }
 

@@ -6,26 +6,27 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 
 using IdentityExp1.Models;
+using NZ01;
 
-namespace IdentityExp1
+namespace NZ01
 {
-    public class ExampleRoleStore : IRoleStore<ApplicationRole>
+    public class ExampleRoleStore : IRoleStore<ExampleApplicationRole>
     {
-        private readonly List<ApplicationRole> _roles;
+        private readonly List<ExampleApplicationRole> _roles;
 
         public ExampleRoleStore()
         {
-            _roles = new List<ApplicationRole>();
+            _roles = new List<ExampleApplicationRole>();
         }
 
-        public Task<IdentityResult> CreateAsync(ApplicationRole role, CancellationToken cancellationToken)
+        public Task<IdentityResult> CreateAsync(ExampleApplicationRole role, CancellationToken cancellationToken)
         {
             _roles.Add(role);
 
             return Task.FromResult(IdentityResult.Success);
         }
 
-        public Task<IdentityResult> UpdateAsync(ApplicationRole role, CancellationToken cancellationToken)
+        public Task<IdentityResult> UpdateAsync(ExampleApplicationRole role, CancellationToken cancellationToken)
         {
             var match = _roles.FirstOrDefault(r => r.RoleId == role.RoleId);
             if (match != null)
@@ -40,7 +41,7 @@ namespace IdentityExp1
             }
         }
 
-        public Task<IdentityResult> DeleteAsync(ApplicationRole role, CancellationToken cancellationToken)
+        public Task<IdentityResult> DeleteAsync(ExampleApplicationRole role, CancellationToken cancellationToken)
         {
             var match = _roles.FirstOrDefault(r => r.RoleId == role.RoleId);
             if (match != null)
@@ -55,43 +56,43 @@ namespace IdentityExp1
             }
         }
 
-        public Task<ApplicationRole> FindByIdAsync(string roleId, CancellationToken cancellationToken)
+        public Task<ExampleApplicationRole> FindByIdAsync(string roleId, CancellationToken cancellationToken)
         {
             var role = _roles.FirstOrDefault(r => r.RoleId == roleId);
 
             return Task.FromResult(role);
         }
 
-        public Task<ApplicationRole> FindByNameAsync(string normalizedRoleName, CancellationToken cancellationToken)
+        public Task<ExampleApplicationRole> FindByNameAsync(string normalizedRoleName, CancellationToken cancellationToken)
         {
             var role = _roles.FirstOrDefault(r => String.Equals(r.RoleNameNormalized, normalizedRoleName, StringComparison.OrdinalIgnoreCase));
 
             return Task.FromResult(role);
         }
 
-        public Task<string> GetRoleIdAsync(ApplicationRole role, CancellationToken cancellationToken)
+        public Task<string> GetRoleIdAsync(ExampleApplicationRole role, CancellationToken cancellationToken)
         {
             return Task.FromResult(role.RoleId);
         }
 
-        public Task<string> GetRoleNameAsync(ApplicationRole role, CancellationToken cancellationToken)
+        public Task<string> GetRoleNameAsync(ExampleApplicationRole role, CancellationToken cancellationToken)
         {
             return Task.FromResult(role.RoleName);
         }
 
-        public Task<string> GetNormalizedRoleNameAsync(ApplicationRole role, CancellationToken cancellationToken)
+        public Task<string> GetNormalizedRoleNameAsync(ExampleApplicationRole role, CancellationToken cancellationToken)
         {
             return Task.FromResult(role.RoleNameNormalized);
         }
 
-        public Task SetRoleNameAsync(ApplicationRole role, string roleName, CancellationToken cancellationToken)
+        public Task SetRoleNameAsync(ExampleApplicationRole role, string roleName, CancellationToken cancellationToken)
         {
             role.RoleName = roleName;
 
             return Task.FromResult(true);
         }
 
-        public Task SetNormalizedRoleNameAsync(ApplicationRole role, string normalizedName, CancellationToken cancellationToken)
+        public Task SetNormalizedRoleNameAsync(ExampleApplicationRole role, string normalizedName, CancellationToken cancellationToken)
         {
             // Do nothing. In this simple example, the normalized name is generated from the role name.
             

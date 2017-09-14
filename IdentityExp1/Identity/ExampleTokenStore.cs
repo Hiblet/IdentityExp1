@@ -6,8 +6,9 @@ using System.Threading;
 using Microsoft.AspNetCore.Identity;
 using IdentityExp1.Models;
 
+using NZ01;
 
-namespace IdentityExp1
+namespace NZ01
 {
     public class ExampleTokenStore : ITokenStore<ApplicationJwtRefreshToken>
     {

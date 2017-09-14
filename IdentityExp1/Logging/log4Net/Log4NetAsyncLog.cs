@@ -319,7 +319,7 @@ namespace NZ01
             if (_emailService == null)
                 return;
 
-            string subject = _assembly + " " + logLevel.ToString();
+            string subject = _assembly + " " + logLevel.ToString() + " on " + Environment.MachineName;
             EmailContext ec = new EmailContext { Subject = subject, Body = msg };
             _emailService.Enqueue(ec);    
         }
